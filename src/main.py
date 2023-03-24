@@ -6,7 +6,7 @@ import re
 import sys
 from optparse import OptionParser
 
-from minecraft.networking.packets import serverbound
+# from minecraft.networking.packets import serverbound
 from trashbags.trashbag import Trashbag
 
 __author__ = "Targeted Entropy"
@@ -166,10 +166,10 @@ def main():
 
                 trash.player_move(new_pos, trash.rotation)
 
-            else:
-                packet = serverbound.play.ChatPacket()
-                packet.message = text
-                trash.connection.write_packet(packet)
+            # else:
+            #     packet = serverbound.play.ChatPacket()
+            #     packet.message = text
+            #     trash.connection.write_packet(packet)
         except KeyboardInterrupt:
             _logger.info("Bye!")
             sys.exit()
