@@ -6,9 +6,7 @@ import re
 import sys
 from optparse import OptionParser
 
-from minecraft.networking.connection import Connection
-from minecraft.networking.packets import clientbound, serverbound
-
+from minecraft.networking.packets import serverbound
 from trashbags.trashbag import Trashbag
 
 __author__ = "Targeted Entropy"
@@ -138,17 +136,6 @@ def setup_logging(loglevel):
     )
 
 
-def player_move(connection: Connection, destination, rotation):
-    pos_packet = serverbound.play.PositionAndLookPacket()
-    pos_packet.x = float(destination[0])
-    pos_packet.feet_y = float(destination[1])
-    pos_packet.z = float(destination[2])
-    pos_packet.yaw = rotation[0]
-    pos_packet.pitch = rotation[1]
-    pos_packet.on_ground = True
-    connection.write_packet(pos_packet, force=True)
-
-
 def main():
     options = get_options()
 
@@ -163,18 +150,21 @@ def main():
     # Register the packet listeners for events
     trash.register_packet_listeners()
 
-    def print_postion(postion_packet):
-        print(f"PositionPacket ({postion_packet}): {postion_packet}")
-
-    trash.connection.register_packet_listener(
-        print_postion, clientbound.play.PlayerPositionAndLookPacket
-    )
-
     while True:
         try:
             text = input()
             if text == "test":
                 print("Testing...")
+                print(f"Old: {trash.position}")
+                new_pos = (trash.position[0] + 1, trash.position[1], trash.position[2])
+                print(f"new_pos: {new_pos}")
+
+                trash.player_move(new_pos, trash.rotation)
+
+                new_pos = (new_pos[0] + 1, new_pos[1], new_pos[2])
+                print(f"new_pos: {new_pos}")
+
+                trash.player_move(new_pos, trash.rotation)
 
             else:
                 packet = serverbound.play.ChatPacket()
@@ -182,6 +172,7 @@ def main():
                 trash.connection.write_packet(packet)
         except KeyboardInterrupt:
             _logger.info("Bye!")
+            sys.exit()
 
 
 if __name__ == "__main__":

@@ -7,16 +7,7 @@ from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import Packet, clientbound, serverbound
 
-
-def player_move(connection: Connection, destination, rotation):
-    pos_packet = serverbound.play.PositionAndLookPacket()
-    pos_packet.x = float(destination[0])
-    pos_packet.feet_y = float(destination[1])
-    pos_packet.z = float(destination[2])
-    pos_packet.yaw = rotation[0]
-    pos_packet.pitch = rotation[1]
-    pos_packet.on_ground = True
-    connection.write_packet(pos_packet, force=True)
+# from minecraft.operation.move import player_move
 
 
 class Trashbag:
@@ -24,6 +15,8 @@ class Trashbag:
         self.options = options
         self.connection = connection
         self.auth_token = None
+        self.position = (0, 0, 0)
+        self.rotation = (0, 0)
 
     def login(self):
         try:
@@ -37,13 +30,28 @@ class Trashbag:
     def connect(self):
         try:
             self.connection = Connection(
-                self.options.address, self.options.port, self.auth_token, None, "1.8"
+                self.options.address,
+                self.options.port,
+                self.auth_token,
+                None,
+                "1.8"
+                # self.options.address,
+                # self.options.port,
+                # None,
+                # "bob",
+                # "1.8",
             )
             self.connection.connect()
 
         except Exception as error:
             print(f"Unable to connect, error: {error}")
             sys.exit(1)
+
+    def print_postion(self, postion_packet):
+        print(f"PositionPacket ({postion_packet}): {postion_packet}")
+        self.position = (postion_packet.x, postion_packet.y, postion_packet.z)
+        self.rotation = (postion_packet.yaw, postion_packet.pitch)
+        print(self.rotation)
 
     def register_packet_listeners(self):
         # Joining the game
@@ -55,6 +63,11 @@ class Trashbag:
             self.print_packet, clientbound.play.ChatMessagePacket
         )
 
+        self.connection.register_packet_listener(
+            self.print_postion, clientbound.play.PlayerPositionAndLookPacket
+        )
+
+        # Enable debug listeners
         if self.options.dump_packets:
             self.connection.register_packet_listener(
                 self.print_incoming, Packet, early=True
@@ -83,3 +96,13 @@ class Trashbag:
         packet = serverbound.play.ChatPacket()
         packet.message = text
         self.connection.write_packet(packet)
+
+    def player_move(self, destination, rotation, on_ground=True):
+        pos_packet = serverbound.play.PositionAndLookPacket()
+        pos_packet.x = float(destination[0])
+        pos_packet.feet_y = float(destination[1])
+        pos_packet.z = float(destination[2])
+        pos_packet.yaw = rotation[0]
+        pos_packet.pitch = rotation[1]
+        pos_packet.on_ground = on_ground
+        self.connection.write_packet(pos_packet, force=True)
