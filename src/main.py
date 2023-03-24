@@ -87,9 +87,9 @@ def get_options():
         help="Enable Microsoft Auth",
     )
 
-    parser.add_argument(
-        "-vv",
-        "--very-verbose",
+    parser.add_option(
+        "-x",
+        "--verbose",
         dest="loglevel",
         help="set loglevel to DEBUG",
         action="store_const",
