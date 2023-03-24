@@ -1,6 +1,5 @@
 [![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](https://pyscaffold.org/)[![ReadTheDocs](https://readthedocs.org/projects/trashbags/badge/?version=latest)](https://trashbags.readthedocs.io/en/stable/)
 
-
 # trashbags
 
 > A Minecraft Python Bot
