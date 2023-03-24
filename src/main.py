@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 
 import getpass
+import logging
 import re
 import sys
 from optparse import OptionParser
 
-# from minecraft import authentication
-# from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import clientbound, serverbound
 
 from trashbags.trashbag import Trashbag
 
-# from minecraft.networking.types import Vector
+__author__ = "Targeted Entropy"
+__copyright__ = "Targeted Entropy"
+__license__ = "MPL-2.0"
+
+_logger = logging.getLogger(__name__)
 
 
 def get_options():
@@ -84,6 +87,15 @@ def get_options():
         help="Enable Microsoft Auth",
     )
 
+    parser.add_argument(
+        "-vv",
+        "--very-verbose",
+        dest="loglevel",
+        help="set loglevel to DEBUG",
+        action="store_const",
+        const=logging.DEBUG,
+    )
+
     (options, args) = parser.parse_args()
 
     if not options.microsoft:
@@ -112,6 +124,18 @@ def get_options():
     options.port = int(match.group("port") or 25565)
 
     return options
+
+
+def setup_logging(loglevel):
+    """Setup basic logging
+
+    Args:
+      loglevel (int): minimum loglevel for emitting messages
+    """
+    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(
+        level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
 
 def player_move(connection: Connection, destination, rotation):
@@ -157,8 +181,7 @@ def main():
                 packet.message = text
                 trash.connection.write_packet(packet)
         except KeyboardInterrupt:
-            print("Bye!")
-            sys.exit()
+            _logger.info("Bye!")
 
 
 if __name__ == "__main__":

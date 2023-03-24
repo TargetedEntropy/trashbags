@@ -1,6 +1,7 @@
 import pytest
 
 from trashbags.skeleton import fib, main
+from trashbags.trashbag import Trashbag
 
 __author__ = "Targeted Entropy"
 __copyright__ = "Targeted Entropy"
@@ -23,3 +24,10 @@ def test_main(capsys):
     main(["7"])
     captured = capsys.readouterr()
     assert "The 7-th Fibonacci number is 13" in captured.out
+
+
+def test_trashbags_can_be_a_real_instance():
+    # Call the trash with a None config
+    trash = Trashbag(None)
+
+    assert isinstance(trash, object)
