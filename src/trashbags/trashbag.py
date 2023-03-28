@@ -18,7 +18,6 @@ class Trashbag:
         self.auth_token = None
         self.position = (0, 0, 0)
         self.rotation = (0, 0)
-        self.auth_list = [""]
 
     def login(self):
         try:
@@ -106,7 +105,7 @@ class Trashbag:
             return False
 
     def is_authorized(self, sender):
-        if sender in self.auth_list:
+        if sender in self.options.auth_list:
             return True
         else:
             return False
