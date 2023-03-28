@@ -18,6 +18,7 @@ class Trashbag:
         self.auth_token = None
         self.position = (0, 0, 0)
         self.rotation = (0, 0)
+        self.user_list = {}
 
     def login(self):
         try:
@@ -37,7 +38,7 @@ class Trashbag:
     def connect(self):
         try:
             self.connection = Connection(
-                self.options.address, self.options.port, self.auth_token, None, "1.8"
+                self.options.address, self.options.port, self.auth_token, None, "1.12.2"
             )
             self.connection.connect()
 
@@ -63,6 +64,10 @@ class Trashbag:
 
         self.connection.register_packet_listener(
             self.print_postion, clientbound.play.PlayerPositionAndLookPacket
+        )
+
+        self.connection.register_packet_listener(
+            self.user_handler, clientbound.play.PlayerListItemPacket
         )
 
         # Enable debug listeners
@@ -110,12 +115,21 @@ class Trashbag:
         else:
             return False
 
+    def user_handler(self, packet):
+        if packet.action_type.__name__ == "AddPlayerAction":
+            self.user_list[packet.actions[0].name] = packet.actions[0].uuid
+        if packet.action_type.__name__ == "RemovePlayerAction":
+            self.user_list = {
+                k: v for k, v in self.user_list.items() if v != packet.actions[0].uuid
+            }
+
     def chat_handler(self, packet):
         if self.is_whisper(packet):
-            sender = self.get_msg_sender(packet)
-            if not self.is_authorized(sender):
+            sender_name = self.get_msg_sender(packet)
+            sender_uuid = self.user_list[sender_name]
+            if not self.is_authorized(sender_uuid):
                 return
-            print(f"Received authorized whisper from {sender}")
+            print(f"Received authorized whisper from {sender_name}")
 
     def send_chat(self: object, text: str):
         packet = serverbound.play.ChatPacket()
