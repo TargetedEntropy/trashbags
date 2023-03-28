@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import sys
 
 from minecraft import authentication
@@ -17,6 +18,7 @@ class Trashbag:
         self.auth_token = None
         self.position = (0, 0, 0)
         self.rotation = (0, 0)
+        self.auth_list = [""]
 
     def login(self):
         try:
@@ -57,7 +59,7 @@ class Trashbag:
         )
 
         self.connection.register_packet_listener(
-            self.print_packet, clientbound.play.ChatMessagePacket
+            self.chat_handler, clientbound.play.ChatMessagePacket
         )
 
         self.connection.register_packet_listener(
@@ -88,6 +90,33 @@ class Trashbag:
 
     def print_debug_outgoing(self, packet):
         print("<-- %s" % packet, file=sys.stderr)
+
+    def get_msg_sender(self, packet):
+        json_data = json.loads(packet.json_data)
+        if "extra" in json_data:
+            for reponse_iter in json_data["extra"]:
+                if reponse_iter["color"] == "light_purple":
+                    return reponse_iter["text"]
+
+    def is_whisper(self, packet) -> bool:
+        json_data = json.loads(packet.json_data)
+        if "color" in json_data:
+            return True
+        else:
+            return False
+
+    def is_authorized(self, sender):
+        if sender in self.auth_list:
+            return True
+        else:
+            return False
+
+    def chat_handler(self, packet):
+        if self.is_whisper(packet):
+            sender = self.get_msg_sender(packet)
+            if not self.is_authorized(sender):
+                return
+            print(f"Received authorized whisper from {sender}")
 
     def send_chat(self: object, text: str):
         packet = serverbound.play.ChatPacket()
