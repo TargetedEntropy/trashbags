@@ -21,7 +21,13 @@ class Trashbag:
     def login(self):
         try:
             self.auth_token = authentication.Microsoft_AuthenticationToken()
-            self.auth_token.authenticate()
+            if self.options.username:
+                if not self.auth_token.PersistenceLogoin_r(self.options.username):
+                    print("Login to {} failed".format(self.options.username))
+                    sys.exit(1)
+            else:
+                if not self.auth_token.authenticate():
+                    sys.exit(2)
         except YggdrasilError as e:
             print(e)
             sys.exit()
@@ -30,16 +36,7 @@ class Trashbag:
     def connect(self):
         try:
             self.connection = Connection(
-                self.options.address,
-                self.options.port,
-                self.auth_token,
-                None,
-                "1.8"
-                # self.options.address,
-                # self.options.port,
-                # None,
-                # "bob",
-                # "1.8",
+                self.options.address, self.options.port, self.auth_token, None, "1.8"
             )
             self.connection.connect()
 
@@ -70,10 +67,10 @@ class Trashbag:
         # Enable debug listeners
         if self.options.dump_packets:
             self.connection.register_packet_listener(
-                self.print_incoming, Packet, early=True
+                self.print_debug_incoming, Packet, early=True
             )
             self.connection.register_packet_listener(
-                self.print_outgoiang, Packet, outgoing=True
+                self.print_debug_outgoing, Packet, outgoing=True
             )
 
     def print_packet(self, packet):
@@ -85,7 +82,7 @@ class Trashbag:
             # that it is a packet of unknown type, so we do not print it
             # unless explicitly requested by the user.
             if self.options.dump_unknown:
-                print("--> [unknown packet] %s" % packet, file=sys.stderr)
+                print("--> [unknown packet] %s" % packet)  # , file=sys.stderr)
         else:
             print("--> %s" % packet, file=sys.stderr)
 
