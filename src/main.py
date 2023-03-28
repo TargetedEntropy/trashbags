@@ -2,9 +2,12 @@
 
 import getpass
 import logging
+import os
 import re
 import sys
 from optparse import OptionParser
+
+from dotenv import load_dotenv
 
 # from minecraft.networking.packets import serverbound
 from trashbags.trashbag import Trashbag
@@ -121,6 +124,13 @@ def get_options():
     options.address = match.group("host") or match.group("addr")
     options.port = int(match.group("port") or 25565)
 
+    # Load Env Options
+    load_dotenv()
+    auth_list = os.getenv("AUTH_LIST")
+    if auth_list:
+        options.auth_list = auth_list.split(",")
+
+    print(options.auth_list)
     return options
 
 
