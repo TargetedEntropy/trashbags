@@ -5,9 +5,16 @@ import logging
 import os
 import re
 import sys
+import time
 from optparse import OptionParser
 
 from dotenv import load_dotenv
+
+from logster import Logster
+
+# from minecraft.managers.chunks import ChunksManager
+from minecraft.networking.packets import serverbound
+from minecraft.networking.types import Position
 
 # from minecraft.networking.packets import serverbound
 from trashbags.trashbag import Trashbag
@@ -16,7 +23,10 @@ __author__ = "Targeted Entropy"
 __copyright__ = "Targeted Entropy"
 __license__ = "MPL-2.0"
 
-_logger = logging.getLogger(__name__)
+
+# Configure logging
+logster = Logster("DEBUG", __name__)
+_logger = logster.get_logger()
 
 
 def get_options():
@@ -130,20 +140,12 @@ def get_options():
     if auth_list:
         options.auth_list = auth_list.split(",")
 
-    print(options.auth_list)
+    options.discord_webhook = os.getenv("DISCORD_WEBHOOK")
+
+    if not options.discord_webhook:
+        sys.exit("Discord Webhook must be added to .env file")
+
     return options
-
-
-def setup_logging(loglevel):
-    """Setup basic logging
-
-    Args:
-      loglevel (int): minimum loglevel for emitting messages
-    """
-    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(
-        level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
-    )
 
 
 def main():
@@ -160,10 +162,36 @@ def main():
     # Register the packet listeners for events
     trash.register_packet_listeners()
 
+    # datamanger = DataManager("data")
+    # chunks = ChunksManager(None)
+    # chunks.register(trash.connection)
+    # Post we're online
+    # discord.send_channel_message("We're online!")
+
     while True:
         try:
             text = input()
-            if text == "test":
+            if text == "jump":
+                jump_pos = (
+                    trash.position[0],
+                    trash.position[1] + 0.10,
+                    trash.position[2],
+                )
+
+                trash.player_move(jump_pos, False)
+            #                time.sleep(0.1)
+
+            elif text == "move":
+                for i in range(1, 2):
+                    new_pos = (
+                        trash.position[0] - 0.20,
+                        trash.position[1] + 0.20,
+                        trash.position[2] + 0.20,
+                    )
+
+                    trash.player_move(new_pos, trash.rotation)
+                    time.sleep(0.5)
+
                 print("Testing...")
                 print(f"Old: {trash.position}")
                 new_pos = (trash.position[0] + 1, trash.position[1], trash.position[2])
@@ -176,10 +204,25 @@ def main():
 
                 trash.player_move(new_pos, trash.rotation)
 
-            # else:
-            #     packet = serverbound.play.ChatPacket()
-            #     packet.message = text
-            #     trash.connection.write_packet(packet)
+            elif text == "chest":
+                packet = serverbound.play.QueryBlockNBTPacket()
+                packet.location = Position(-860399.29, 65.63, -865399.27)
+                packet.transaction_id = 1
+                # packet.click_type = ClickType.INTERACT
+                trash.connection.write_packet(packet)
+            elif text == "players":
+                print(trash.user_list)
+            elif text == "pos":
+                print(f"MyPos: {trash.position}")
+            elif text == "respawn":
+                print("Respawning")
+                trash.respawn()
+            elif text == "health":
+                print(f"Health: {trash.health}, Food: {trash.food}")
+            elif text != "":
+                packet = serverbound.play.ChatPacket()
+                packet.message = text
+                trash.connection.write_packet(packet)
         except KeyboardInterrupt:
             _logger.info("Bye!")
             sys.exit()
